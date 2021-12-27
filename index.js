@@ -90,7 +90,7 @@ function lifecycle (pkg, stage, wd, opts) {
         }
 
         // set the env variables, then run scripts as a child process.
-        var env = makeEnv(pkg, opts)
+        var env = makeEnv(pkg, opts, null, opts.env)
         env.npm_lifecycle_event = stage
         env.npm_node_execpath = env.NODE = env.NODE || process.execPath
         env.npm_execpath = require.main.filename
