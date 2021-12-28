@@ -1,6 +1,7 @@
 'use strict'
 
 exports = module.exports = lifecycle
+exports.initEnv = initEnv
 exports.makeEnv = makeEnv
 exports._incorrectWorkingDirectory = _incorrectWorkingDirectory
 
@@ -389,18 +390,26 @@ function runHookLifecycle (pkg, stage, env, wd, opts, cb) {
   })
 }
 
-function makeEnv (data, opts, prefix, env) {
+function initEnv(fromEnv, production) {
+  fromEnv = fromEnv || process.env;
+
+  var env = {};
+  for (var i in fromEnv) {
+    if (!i.match(/^npm_/)) {
+      env[i] = fromEnv[i]
+    }
+  }
+
+  // express and others respect the NODE_ENV value.
+  if (production) env.NODE_ENV = 'production'
+
+  return env;
+}
+
+function makeEnv(data, opts, prefix, env) {
   prefix = prefix || 'npm_package_'
   if (!env) {
-    env = {}
-    for (var i in process.env) {
-      if (!i.match(/^npm_/)) {
-        env[i] = process.env[i]
-      }
-    }
-
-    // express and others respect the NODE_ENV value.
-    if (opts.production) env.NODE_ENV = 'production'
+    env = initEnv(process.env, opts.production)
   } else if (!data.hasOwnProperty('_lifecycleEnv')) {
     Object.defineProperty(data, '_lifecycleEnv',
       {
@@ -412,7 +421,7 @@ function makeEnv (data, opts, prefix, env) {
 
   if (opts.nodeOptions) env.NODE_OPTIONS = opts.nodeOptions
 
-  for (i in data) {
+  for (var i in data) {
     if (i.charAt(0) !== '_') {
       var envKey = (prefix + i).replace(/[^a-zA-Z0-9_]/g, '_')
       if (i === 'readme') {
